@@ -74,7 +74,7 @@ function shared_point_indices(indices::Indices, j::Int, k::Int)
 
     # return Nothing if mask is a zero array: no points are shared
     if !any(mask)
-        return Nothing
+        return nothing
     end
 
     indices.indices[mask, j], indices.indices[mask, k]

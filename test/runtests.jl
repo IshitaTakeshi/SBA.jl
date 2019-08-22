@@ -2,6 +2,7 @@ using Test
 
 import SBA
 
+
 # x_ij is a keypoint corresponding to the i-th 3D point
 # observed from the j-th camera (viewpoint).
 # Assume we have a keypoint array X = {x_ij} observed in condition
@@ -75,7 +76,8 @@ indices = SBA.Indices(mask)
 @test SBA.shared_point_indices(indices, 1, 2) == ([2], [3])
 
 # no points are shared
-@test SBA.shared_point_indices(indices, 1, 3) == Nothing
+@test isnothing(SBA.shared_point_indices(indices, 1, 3))
+
 
 # 2nd row has only zero elements
 mask = BitMatrix([
