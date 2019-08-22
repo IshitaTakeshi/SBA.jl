@@ -26,12 +26,14 @@ indices = SBA.Indices(mask)
 @test SBA.n_viewpoints(indices) == 3
 
 # get array indices of X for x_*1
+# where x_*1 are projections of all visible points in the 1st viewpoint
 @test SBA.viewpoint_indices(indices, 1) == [1, 4, 8]
 
 # get array indices of X for x_*3
 @test SBA.viewpoint_indices(indices, 3) == [3, 5, 7]
 
 # get array indices of X for x_1*
+# where x_1* are projections of the 1st 3D point in all observable viewpoints
 @test SBA.point_indices(indices, 1) == [1, 2, 3]
 
 # get array indices of X for x_4*
