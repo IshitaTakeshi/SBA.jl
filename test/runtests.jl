@@ -2,7 +2,9 @@ using Test
 
 import SBA
 
-# we have a keypoint array X observed in condition
+# x_ij is a keypoint corresponding to the i-th 3D point
+# observed from the j-th camera (viewpoint).
+# Assume we have a keypoint array X = {x_ij} observed in condition
 # n_points = 4, n_viewpoints = 3,
 # where x_22 x_31 x_43 are missing.
 #
