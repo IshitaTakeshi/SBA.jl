@@ -58,3 +58,21 @@ function point_indices(indices::Indices, i::Int)
     indices.indices[i, indices.mask[i, :]]
 end
 
+
+function shared_point_indices(indices::Indices, j::Int, k::Int)
+    """
+    j, k: viewpoint indices
+    This function returns two indices of points commonly observed from both viwpoints.
+    These two indices are corresponding to the first and second view respectively
+    """
+
+    # element wise multiplication for calculating 'and'
+    mask = view(indices.mask, :, j) .* view(indices.mask, :, k)
+
+    # return Nothing if mask is a zero array: no points are shared
+    if !any(mask)
+        return Nothing
+    end
+
+    indices.indices[mask, j], indices.indices[mask, k]
+end

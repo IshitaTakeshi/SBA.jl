@@ -34,6 +34,12 @@ indices = SBA.Indices(mask)
 # get array indices of X for x_4*
 @test SBA.point_indices(indices, 4) == [8, 9]
 
+# [x_12, x_32] and [x_13, x_33] are shared
+@test SBA.shared_point_indices(indices, 2, 3) == ([2, 6], [3, 7])
+
+# [x_11, x_21] and [x_13, x_23] are shared
+@test SBA.shared_point_indices(indices, 1, 3) == ([1, 4], [3, 5])
+
 
 # another case
 # n_points = 2, n_viewpoints = 3,
@@ -63,6 +69,11 @@ indices = SBA.Indices(mask)
 # get array indices of X for x_2*
 @test SBA.point_indices(indices, 2) == [2, 3]
 
+# [x_21] and [x_22] are shared
+@test SBA.shared_point_indices(indices, 1, 2) == ([2], [3])
+
+# no points are shared
+@test SBA.shared_point_indices(indices, 1, 3) == Nothing
 
 # 2nd row has only zero elements
 mask = BitMatrix([
