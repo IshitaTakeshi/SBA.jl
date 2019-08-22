@@ -51,11 +51,14 @@ end
 
 
 function viewpoint_indices(indices::Indices, j::Int)
-    indices.indices[indices.mask[:, j], j]
+    mask = view(indices.mask, :, j)
+    indices.indices[mask, j]
 end
 
+
 function point_indices(indices::Indices, i::Int)
-    indices.indices[i, indices.mask[i, :]]
+    mask = view(indices.mask, i, :)
+    indices.indices[i, mask]
 end
 
 
