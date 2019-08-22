@@ -19,6 +19,9 @@ mask = BitMatrix([
 
 indices = SBA.Indices(mask)
 
+@test SBA.n_points(indices) == 4
+@test SBA.n_viewpoints(indices) == 3
+
 # get array indices of X for x_*1
 @test SBA.viewpoint_indices(indices, 1) == [1, 4, 8]
 
@@ -44,6 +47,9 @@ mask = BitMatrix([
 ])
 
 indices = SBA.Indices(mask)
+
+@test SBA.n_points(indices) == 2
+@test SBA.n_viewpoints(indices) == 3
 
 # get array indices of X for x_*1
 @test SBA.viewpoint_indices(indices, 1) == [2]

@@ -8,6 +8,10 @@ struct Indices
 end
 
 
+n_points(indices::Indices) = size(indices.mask, 1)
+n_viewpoints(indices::Indices) = size(indices.mask, 2)
+
+
 # We don't accept masks that have zero row / col
 #
 # mask = [1 0 1 0;
