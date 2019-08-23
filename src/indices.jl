@@ -50,13 +50,13 @@ function Indices(mask::BitMatrix)
 end
 
 
-function viewpoint_indices(indices::Indices, j::Int)
+function point_indices(indices::Indices, j::Int)
     mask = view(indices.mask, :, j)
     indices.indices[mask, j]
 end
 
 
-function point_indices(indices::Indices, i::Int)
+function viewpoint_indices(indices::Indices, i::Int)
     mask = view(indices.mask, i, :)
     indices.indices[i, mask]
 end

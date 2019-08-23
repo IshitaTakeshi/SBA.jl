@@ -22,17 +22,17 @@ indices = SBA.Indices(mask)
 
 # get array indices of X for x_*1
 # where x_*1 are projections of all visible points in the 1st viewpoint
-@test SBA.viewpoint_indices(indices, 1) == [1, 4, 8]
+@test SBA.point_indices(indices, 1) == [1, 4, 8]
 
 # get array indices of X for x_*3
-@test SBA.viewpoint_indices(indices, 3) == [3, 5, 7]
+@test SBA.point_indices(indices, 3) == [3, 5, 7]
 
 # get array indices of X for x_1*
 # where x_1* are projections of the 1st 3D point in all observable viewpoints
-@test SBA.point_indices(indices, 1) == [1, 2, 3]
+@test SBA.viewpoint_indices(indices, 1) == [1, 2, 3]
 
 # get array indices of X for x_4*
-@test SBA.point_indices(indices, 4) == [8, 9]
+@test SBA.viewpoint_indices(indices, 4) == [8, 9]
 
 # [x_12, x_32] and [x_13, x_33] are shared
 @test SBA.shared_point_indices(indices, 2, 3) == ([2, 6], [3, 7])
@@ -58,16 +58,16 @@ indices = SBA.Indices(mask)
 @test SBA.n_viewpoints(indices) == 3
 
 # get array indices of X for x_*1
-@test SBA.viewpoint_indices(indices, 1) == [2]
+@test SBA.point_indices(indices, 1) == [2]
 
 # get array indices of X for x_*3
-@test SBA.viewpoint_indices(indices, 3) == [1]
+@test SBA.point_indices(indices, 3) == [1]
 
 # get array indices of X for x_1*
-@test SBA.point_indices(indices, 1) == [1]
+@test SBA.viewpoint_indices(indices, 1) == [1]
 
 # get array indices of X for x_2*
-@test SBA.point_indices(indices, 2) == [2, 3]
+@test SBA.viewpoint_indices(indices, 2) == [2, 3]
 
 # [x_21] and [x_22] are shared
 @test SBA.shared_point_indices(indices, 1, 2) == ([2], [3])
