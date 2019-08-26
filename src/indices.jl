@@ -51,12 +51,22 @@ end
 
 
 function point_indices(indices::Indices, j::Int)
+    """
+    'point_indices(j)' should return indices of 3D points
+    observable from a viewpoint j
+    """
+
     mask = view(indices.mask, :, j)
     indices.indices[mask, j]
 end
 
 
 function viewpoint_indices(indices::Indices, i::Int)
+    """
+    'viewpoint_indices(i)' should return indices of viewpoints
+    that can observe a point i
+    """
+
     mask = view(indices.mask, i, :)
     indices.indices[i, mask]
 end
