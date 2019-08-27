@@ -222,10 +222,9 @@ function calc_delta_b(indices::Indices, V_inv::Array, W::Array,
 end
 
 
-function sba(mask::BitArray, x_true::Array, x_pred::Array, A::Array, B::Array)
+function sba(indices::Indices, x_true::Array, x_pred::Array, A::Array, B::Array)
     @assert size(A, 3) == size(B, 3)
 
-    indices = Indices(mask)
     U = calc_U(indices, A)
     V_inv = calc_V_inv(indices, B)
     W = calc_W(indices, A, B)

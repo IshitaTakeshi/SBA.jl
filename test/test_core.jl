@@ -35,10 +35,14 @@ end
 # 2 points, 3 viewpoints
 # i = 1:2, j = 1:3
 # N = 4 (number of visible points)
-mask = BitArray([1 1 0;
-                 0 1 1])
+# X    = [x_11 x_12 x_22 x_23]
+# mask = [   1    1    0;
+#            0    1    1]
 
-indices = SBA.Indices(mask)
+point_indices = [1, 1, 2, 2]
+viewpoint_indices = [1, 2, 2, 3]
+
+indices = SBA.Indices(point_indices, viewpoint_indices)
 
 U = SBA.calc_U(indices, A)
 @test size(U) == (4, 4, 3)  # (n_pose_paramas, n_pose_paramas, n_viewpoints)
@@ -133,4 +137,9 @@ x_true = Float64[1 -1 -1  3;
 x_pred = Float64[ 0 1 -2 -1;
                  -1 2  0  1]
 
-delta_a, delta_b = SBA.sba(mask, x_true, x_pred, A, B)
+# mask = [1 1 0;
+#         0 1 1]
+point_indices = [1, 1, 2, 2]
+viewpoint_indices = [1, 2, 2, 3]
+indices = SBA.Indices(point_indices, viewpoint_indices)
+delta_a, delta_b = SBA.sba(indices, x_true, x_pred, A, B)

@@ -1,21 +1,13 @@
-# x_ij is a keypoint corresponding to the i-th 3D point
-# observed from the j-th camera (viewpoint).
-# Assume we have a keypoint array X = {x_ij} observed in condition
-# n_points = 4, n_viewpoints = 3,
-# where x_22 x_31 x_43 are missing.
-#
-# indices     1    2    3    4    5    6    7    8    9
-#   X =   [x_11 x_12 x_13 x_21 x_23 x_32 x_33 x_41 x_42]
+# visibility mask = [
+#     1 1 1;  # x_11 x_12 x_13
+#     1 0 1;  # x_21      x_23
+#     0 1 1;  #      x_32 x_33
+#     1 1 0;  # x_41 x_42
+# ]
 
-# then the corresponding mask should be
-mask = BitMatrix([
-    1 1 1;  # x_11 x_12 x_13
-    1 0 1;  # x_21      x_23
-    0 1 1;  #      x_32 x_33
-    1 1 0;  # x_41 x_42
-])
-
-indices = SBA.Indices(mask)
+point_indices = [1, 1, 1, 2, 2, 3, 3, 4, 4]
+viewpoint_indices = [1, 2, 3, 1, 3, 2, 3, 1, 2]
+indices = SBA.Indices(point_indices, viewpoint_indices)
 
 @test SBA.n_points(indices) == 4
 @test SBA.n_viewpoints(indices) == 3
@@ -47,12 +39,14 @@ indices = SBA.Indices(mask)
 #   X =   [x_13 x_21 x_22]
 
 # then the corresponding mask should be
-mask = BitMatrix([
+mask = [
     0 0 1;  #           x_13
     1 1 0;  # x_21 x_22
-])
+]
 
-indices = SBA.Indices(mask)
+point_indices = [1, 2, 2]
+viewpoint_indices = [3, 1, 2]
+indices = SBA.Indices(point_indices, viewpoint_indices)
 
 @test SBA.n_points(indices) == 2
 @test SBA.n_viewpoints(indices) == 3
@@ -76,27 +70,22 @@ indices = SBA.Indices(mask)
 @test isnothing(SBA.shared_point_indices(indices, 1, 3))
 
 
-# 2nd row has only zero elements
-mask = BitMatrix([
-    1 0 1 0;
-    0 0 0 0;
-    0 1 1 1
-])
-@test_throws AssertionError SBA.assert_if_zero_row_found(mask)
+# second row has only zero elements
+# visibility mask = [
+#     1 0 1 0;
+#     0 0 0 0;
+#     0 1 1 1
+# ]
+point_indices = [1, 1, 3, 3, 3]
+viewpoint_indices = [1, 3, 2, 3, 4]
+@test_throws AssertionError SBA.Indices(point_indices, viewpoint_indices)
 
-# last column has only zero elements
-mask = BitMatrix([
-    1 0 1 0;
-    0 1 0 0;
-    0 1 1 0
-])
-@test_throws AssertionError SBA.assert_if_zero_col_found(mask)
-
-# nothing should happeen
-mask = BitMatrix([
-    1 0 1 0;
-    0 1 0 1;
-    0 1 1 0
-])
-SBA.assert_if_zero_col_found(mask)
-SBA.assert_if_zero_row_found(mask)
+# third column has only zero elements
+# visibility mask = [
+#     1 0 0 1;
+#     0 1 0 0;
+#     0 1 0 1
+# ]
+point_indices = [1, 1, 2, 3, 3]
+viewpoint_indices = [1, 4, 2, 2, 4]
+@test_throws AssertionError SBA.Indices(point_indices, viewpoint_indices)

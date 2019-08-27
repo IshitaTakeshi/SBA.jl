@@ -1,52 +1,74 @@
-# The current implementation is inefficient: consumes a lot of memory space.
-# TODO Use sussinct bit vector to reduce the memory consumption
-# whilist keeping the speed
+# x_ij is a keypoint corresponding to the i-th 3D point
+# observed from the j-th camera (viewpoint).
+# Assume we have a keypoint array X = {x_ij} observed in condition
+# n_points = 4, n_viewpoints = 3,
+# where x_22 x_31 x_43 are missing.
+#
+# X            [x_11 x_12 x_13 x_21 x_23 x_32 x_33 x_41 x_42]
+# indices          1    2    3    4    5    6    7    8    9
+# point index      1    1    1    2    2    3    3    4    4
+# viewpoint index  1    2    3    1    3    2    3    1    2
+
+# viewpoints_by_point[1] == [1, 2, 3]  # x_11 x_12 x_13
+# viewpoints_by_point[2] == [4, 5]     # x_21 x_23
+# viewpoints_by_point[3] == [6, 7]     # x_32 x_33
+# viewpoints_by_point[4] == [8, 9]     # x_41 x_42
+
+# points_by_viewpoint[1] == [1, 4, 8]  # x_11 x_21 x_41
+# points_by_viewpoint[2] == [2, 6, 9]  # x_12 x_32 x_42
+# points_by_viewpoint[3] == [3, 5, 7]  # x_13 x_23 x_33
+#
+# mask = [
+#     1 1 1;  # x_11 x_12 x_13
+#     1 0 1;  # x_21      x_23
+#     0 1 1;  #      x_32 x_33
+#     1 1 0;  # x_41 x_42
+# ]
+
 
 struct Indices
-    mask::BitMatrix
-    indices::Array{Int}
+    mask::BitArray
+    viewpoints_by_point::Vector{Vector{Int}}
+    points_by_viewpoint::Vector{Vector{Int}}
 end
 
 
-n_points(indices::Indices) = size(indices.mask, 1)
-n_viewpoints(indices::Indices) = size(indices.mask, 2)
+n_points(indices::Indices) = length(indices.viewpoints_by_point)
+n_viewpoints(indices::Indices) = length(indices.points_by_viewpoint)
 
-
-# We don't accept masks that have zero row / col
-#
-# mask = [1 0 1 0;
-#         0 0 0 0;
-#         0 1 1 1]
-# -> 2nd row has only zero elements. Not accepted.
-#
-# mask = [1 0 1 0;
-#         0 1 0 0;
-#         0 1 1 0]
-# -> Last column has only zero elements. Not accepted
 
 is_non_zero(A::BitArray, dim::Int) = all(any(A; dims = dim))
 
-assert_if_zero_col_found(A::BitMatrix) = @assert is_non_zero(A, 1)
-assert_if_zero_row_found(A::BitMatrix) = @assert is_non_zero(A, 2)
 
+function Indices(point_indices::Array{Int}, viewpoint_indices::Array{Int})
+    @assert length(point_indices) == length(viewpoint_indices)
 
-function Indices(mask::BitMatrix)
-    assert_if_zero_row_found(mask)
-    assert_if_zero_col_found(mask)
+    n_points = maximum(point_indices)
+    n_viewpoints = maximum(viewpoint_indices)
+    mask = BitArray(undef, n_points, n_viewpoints)
 
-    indices = Array{Int}(undef, size(mask))
+    viewpoints_by_point = [Array{Int}([]) for i in 1:n_points]
+    points_by_viewpoint = [Array{Int}([]) for j in 1:n_viewpoints]
 
-    n_points, n_viewpoints = size(mask)
+    unique_points = Set([])
+    unique_viewpoints = Set([])
 
-    s = 0
-    for i in 1:n_points
-        for j in 1:n_viewpoints
-            s = s + mask[i, j]
-            indices[i, j] = s
-        end
+    for (index, (i, j)) in enumerate(zip(point_indices, viewpoint_indices))
+        push!(viewpoints_by_point[i], index)
+        push!(points_by_viewpoint[j], index)
+        mask[i, j] = 1
+
+        push!(unique_points, i)
+        push!(unique_viewpoints, j)
     end
 
-    Indices(mask, indices)
+    # they cannot be true if some point / viewpoint indices are missing
+    # ex. raises AssertionError if n_viewpoints == 4 and
+    # unique_viewpoints == [1, 2, 4]  (3 is missing)
+    @assert length(unique_viewpoints) == n_viewpoints
+    @assert length(unique_points) == n_points
+
+    Indices(mask, viewpoints_by_point, points_by_viewpoint)
 end
 
 
@@ -56,8 +78,7 @@ function point_indices(indices::Indices, j::Int)
     observable from a viewpoint j
     """
 
-    mask = view(indices.mask, :, j)
-    indices.indices[mask, j]
+    indices.points_by_viewpoint[j]
 end
 
 
@@ -67,25 +88,43 @@ function viewpoint_indices(indices::Indices, i::Int)
     that can observe a point i
     """
 
-    mask = view(indices.mask, i, :)
-    indices.indices[i, mask]
+    indices.viewpoints_by_point[i]
 end
 
 
 function shared_point_indices(indices::Indices, j::Int, k::Int)
     """
     j, k: viewpoint indices
-    This function returns two indices of points commonly observed from both viwpoints.
+    This function returns two indices of points commonly observed from both viewpoints.
     These two indices are corresponding to the first and second view respectively
     """
+    mask_j = view(indices.mask, :, j)
+    mask_k = view(indices.mask, :, k)
 
-    # element wise multiplication for calculating 'and'
-    mask = view(indices.mask, :, j) .* view(indices.mask, :, k)
+    indices_j = Array{Int}([])
+    indices_k = Array{Int}([])
 
-    # return Nothing if mask is a zero array: no points are shared
-    if !any(mask)
-        return nothing
+    index_j = 0
+    index_k = 0
+    for (bit_j, bit_k) in zip(mask_j, mask_k)
+        if bit_j == 1
+            index_j += 1
+        end
+
+        if bit_k == 1
+            index_k += 1
+        end
+
+        if bit_j & bit_k == 1
+            push!(indices_j, index_j)
+            push!(indices_k, index_k)
+        end
     end
 
-    indices.indices[mask, j], indices.indices[mask, k]
+    if length(indices_j) == 0  # (== length(indices_k))
+        return nothing  # no shared points found between j and k
+    end
+
+    (indices.points_by_viewpoint[j][indices_j],
+     indices.points_by_viewpoint[k][indices_k])
 end
