@@ -72,9 +72,9 @@ function Indices(viewpoint_indices::Array{Int}, point_indices::Array{Int})
 end
 
 
-function point_indices(indices::Indices, j::Int)
+function points_by_viewpoint(indices::Indices, j::Int)
     """
-    'point_indices(j)' should return indices of 3D points
+    'points_by_viewpoint(j)' should return indices of 3D points
     observable from a viewpoint j
     """
 
@@ -82,9 +82,9 @@ function point_indices(indices::Indices, j::Int)
 end
 
 
-function viewpoint_indices(indices::Indices, i::Int)
+function viewpoints_by_point(indices::Indices, i::Int)
     """
-    'viewpoint_indices(i)' should return indices of viewpoints
+    'viewpoints_by_point(i)' should return indices of viewpoints
     that can observe a point i
     """
 

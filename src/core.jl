@@ -13,7 +13,7 @@ function calc_epsilon_a(indices::Indices, A::Array, epsilon::Array)
     epsilon_a = Array{Float64}(undef, n_pose_params, m)
 
     for j in 1:m
-        I = point_indices(indices, j)
+        I = points_by_viewpoint(indices, j)
 
         Aj = view(A, :, :, I)  # [A_ij for i in I]
         epsilon_j = view(epsilon, :, I)  # [epsilon_ij for i in I]
@@ -37,7 +37,7 @@ function calc_epsilon_b(indices::Indices, B::Array, epsilon::Array)
     epsilon_b = Array{Float64}(undef, n_point_params, n)
 
     for i in 1:n
-        J = viewpoint_indices(indices, i)
+        J = viewpoints_by_point(indices, i)
 
         Bi = view(B, :, :, J)  # [Bij for j in J]
         epsilon_i = view(epsilon, :, J)  # [epsilon_ij for j in J]
@@ -63,8 +63,8 @@ function calc_U(indices::Indices, A::Array)
     U = Array{Float64}(undef, n_pose_params, n_pose_params, m)
 
     for j in 1:m
-        # Aj = [Aij for i in point_indices(j)]
-        Aj = view(A, :, :, point_indices(indices, j))
+        # Aj = [Aij for i in points_by_viewpoint(j)]
+        Aj = view(A, :, :, points_by_viewpoint(indices, j))
         U[:, :, j] = calc_Uj(Aj)
     end
 
@@ -80,8 +80,8 @@ function calc_V_inv(indices::Indices, B::Array)
     V_inv = Array{Float64}(undef, n_point_params, n_point_params, n)
 
     for i in 1:n
-        # Bi = [Bij for j in viewpoint_indices(i)]
-        Bi = view(B, :, :, viewpoint_indices(indices, i))
+        # Bi = [Bij for j in viewpoints_by_point(i)]
+        Bi = view(B, :, :, viewpoints_by_point(indices, i))
         Vi = calc_Vi(Bi)
         V_inv[:, :, i] = inv(Vi)
     end
@@ -113,9 +113,9 @@ function calc_Y(indices::Indices, W::Array, V_inv::Array)
     for i in 1:n_points(indices)
         Vi_inv = view(V_inv, :, :, i)
 
-        # Yi = [Yij for j in viewpoint_indices(i)]
+        # Yi = [Yij for j in viewpoints_by_point(i)]
         # note that Yi is still a copy of Wi
-        Yi = view(Y, :, :, viewpoint_indices(indices, i))
+        Yi = view(Y, :, :, viewpoints_by_point(indices, i))
 
         for Yij in eachslice(Yi, dims = 3)
             Yij[:] = Yij * Vi_inv  # overwrite  Yij = Wi * inv(Vi)
@@ -176,14 +176,14 @@ function calc_e(indices::Indices, Y::Array, epsilon_a::Array, epsilon_b::Array)
     for i in 1:n_points(indices)
         epsilon_bi = epsilon_b[:, i]
 
-        for index in viewpoint_indices(indices, i)
+        for index in viewpoints_by_point(indices, i)
             Y_epsilon_b[:, index] = view(Y, :, :, index) * epsilon_bi
         end
     end
 
     e = copy(epsilon_a)
     for j in 1:n_viewpoints(indices)
-        sub = view(Y_epsilon_b, :, point_indices(indices, j))
+        sub = view(Y_epsilon_b, :, points_by_viewpoint(indices, j))
         e[:, j] -= sum(sub, dims = 2)
     end
 
@@ -212,7 +212,7 @@ function calc_delta_b(indices::Indices, V_inv::Array, W::Array,
     for i in 1:n
         Vi_inv = view(V_inv, :, :, i)
 
-        Wi = view(W, :, :, viewpoint_indices(indices, i))
+        Wi = view(W, :, :, viewpoints_by_point(indices, i))
         epsilon_bi = view(epsilon_b, :, i)
         Widelta_a = calc_Widelta_a(Wi, delta_a)
         delta_b[:, i] = Vi_inv * (epsilon_bi - Widelta_a)
