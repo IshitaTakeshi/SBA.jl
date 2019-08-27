@@ -40,8 +40,8 @@ n_viewpoints(indices::Indices) = length(indices.points_by_viewpoint)
 is_non_zero(A::BitArray, dim::Int) = all(any(A; dims = dim))
 
 
-function Indices(point_indices::Array{Int}, viewpoint_indices::Array{Int})
-    @assert length(point_indices) == length(viewpoint_indices)
+function Indices(viewpoint_indices::Array{Int}, point_indices::Array{Int})
+    @assert length(viewpoint_indices) == length(point_indices)
 
     n_points = maximum(point_indices)
     n_viewpoints = maximum(viewpoint_indices)

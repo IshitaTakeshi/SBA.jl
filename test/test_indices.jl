@@ -5,9 +5,9 @@
 #     1 1 0;  # x_41 x_42
 # ]
 
-point_indices = [1, 1, 1, 2, 2, 3, 3, 4, 4]
 viewpoint_indices = [1, 2, 3, 1, 3, 2, 3, 1, 2]
-indices = SBA.Indices(point_indices, viewpoint_indices)
+point_indices = [1, 1, 1, 2, 2, 3, 3, 4, 4]
+indices = SBA.Indices(viewpoint_indices, point_indices)
 
 @test SBA.n_points(indices) == 4
 @test SBA.n_viewpoints(indices) == 3
@@ -44,9 +44,9 @@ mask = [
     1 1 0;  # x_21 x_22
 ]
 
-point_indices = [1, 2, 2]
 viewpoint_indices = [3, 1, 2]
-indices = SBA.Indices(point_indices, viewpoint_indices)
+point_indices = [1, 2, 2]
+indices = SBA.Indices(viewpoint_indices, point_indices)
 
 @test SBA.n_points(indices) == 2
 @test SBA.n_viewpoints(indices) == 3
@@ -76,9 +76,9 @@ indices = SBA.Indices(point_indices, viewpoint_indices)
 #     0 0 0 0;
 #     0 1 1 1
 # ]
-point_indices = [1, 1, 3, 3, 3]
 viewpoint_indices = [1, 3, 2, 3, 4]
-@test_throws AssertionError SBA.Indices(point_indices, viewpoint_indices)
+point_indices = [1, 1, 3, 3, 3]
+@test_throws AssertionError SBA.Indices(viewpoint_indices, point_indices)
 
 # third column has only zero elements
 # visibility mask = [
@@ -86,6 +86,6 @@ viewpoint_indices = [1, 3, 2, 3, 4]
 #     0 1 0 0;
 #     0 1 0 1
 # ]
-point_indices = [1, 1, 2, 3, 3]
 viewpoint_indices = [1, 4, 2, 2, 4]
-@test_throws AssertionError SBA.Indices(point_indices, viewpoint_indices)
+point_indices = [1, 1, 2, 3, 3]
+@test_throws AssertionError SBA.Indices(viewpoint_indices, point_indices)

@@ -39,10 +39,10 @@ end
 # mask = [   1    1    0;
 #            0    1    1]
 
-point_indices = [1, 1, 2, 2]
 viewpoint_indices = [1, 2, 2, 3]
+point_indices = [1, 1, 2, 2]
 
-indices = SBA.Indices(point_indices, viewpoint_indices)
+indices = SBA.Indices(viewpoint_indices, point_indices)
 
 U = SBA.calc_U(indices, A)
 @test size(U) == (4, 4, 3)  # (n_pose_paramas, n_pose_paramas, n_viewpoints)
@@ -139,7 +139,7 @@ x_pred = Float64[ 0 1 -2 -1;
 
 # mask = [1 1 0;
 #         0 1 1]
-point_indices = [1, 1, 2, 2]
 viewpoint_indices = [1, 2, 2, 3]
-indices = SBA.Indices(point_indices, viewpoint_indices)
+point_indices = [1, 1, 2, 2]
+indices = SBA.Indices(viewpoint_indices, point_indices)
 delta_a, delta_b = SBA.sba(indices, x_true, x_pred, A, B)
