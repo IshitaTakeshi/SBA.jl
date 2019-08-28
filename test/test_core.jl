@@ -185,7 +185,6 @@ W_pred = SBA.calc_W(indices, A, B)
 @test isapprox(W_pred[:, :, 4], W[9:12, 4:6])  # W_23
 
 S = U - W * V_inv * W'
-println("det(S) = $(det(S))")
 
 Y_pred = SBA.calc_Y(indices, W_pred, V_inv_pred)
 S_pred = SBA.calc_S(indices, U_pred, Y_pred, W_pred)
