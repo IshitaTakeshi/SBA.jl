@@ -123,12 +123,6 @@ delta_a = SBA.calc_delta_a(S, e)
 
 delta_b = SBA.calc_delta_b(indices, V_inv, W, epsilon_b, delta_a)
 @test size(delta_b) == (3, 2)  # (n_point_params, n_points)
-delta_b[1] == V_inv[:, :, 1] * (epsilon_b[:, 1]
-                             - (W[:, :, 1]' * delta_a[:, 1] +
-                                W[:, :, 2]' * delta_a[:, 2]))
-delta_b[2] == V_inv[:, :, 2] * (epsilon_b[:, 2]
-                             - (W[:, :, 3]' * delta_a[:, 2] +
-                                W[:, :, 4]' * delta_a[:, 3]))
 
 # size(x_true) = (2, N)
 x_true = Float64[1 -1 -1  3;
@@ -143,3 +137,11 @@ viewpoint_indices = [1, 2, 2, 3]
 point_indices = [1, 1, 2, 2]
 indices = SBA.Indices(viewpoint_indices, point_indices)
 delta_a, delta_b = SBA.sba(indices, x_true, x_pred, A, B)
+@test isapprox(delta_b[:, 1],
+               V_inv[:, :, 1] * (epsilon_b[:, 1]
+                              - (W[:, :, 1]' * delta_a[:, 1] +
+                                 W[:, :, 2]' * delta_a[:, 2])))
+@test isapprox(delta_b[:, 2],
+               V_inv[:, :, 2] * (epsilon_b[:, 2]
+                              - (W[:, :, 3]' * delta_a[:, 2] +
+                                 W[:, :, 4]' * delta_a[:, 3])))
