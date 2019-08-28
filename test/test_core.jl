@@ -116,27 +116,13 @@ S = SBA.calc_S(indices, U, Y, W)
 # (j, k) == (3, 3)
 @test S[9:12, 9:12] ==  - Y[:, :, 4] * W[:, :, 4]' + U[:, :, 3]
 
-
 delta_a = SBA.calc_delta_a(S, e)
 @test size(delta_a) == (4, 3)  # (n_pose_params, n_viewpoints)
 @test isapprox(S * vec(delta_a), vec(e))
 
 delta_b = SBA.calc_delta_b(indices, V_inv, W, epsilon_b, delta_a)
+
 @test size(delta_b) == (3, 2)  # (n_point_params, n_points)
-
-# size(x_true) = (2, N)
-x_true = Float64[1 -1 -1  3;
-                 0  2  1 -1]
-
-x_pred = Float64[ 0 1 -2 -1;
-                 -1 2  0  1]
-
-# mask = [1 1 0;
-#         0 1 1]
-viewpoint_indices = [1, 2, 2, 3]
-point_indices = [1, 1, 2, 2]
-indices = SBA.Indices(viewpoint_indices, point_indices)
-delta_a, delta_b = SBA.sba(indices, x_true, x_pred, A, B)
 @test isapprox(delta_b[:, 1],
                V_inv[:, :, 1] * (epsilon_b[:, 1]
                               - (W[:, :, 1]' * delta_a[:, 1] +
@@ -145,3 +131,75 @@ delta_a, delta_b = SBA.sba(indices, x_true, x_pred, A, B)
                V_inv[:, :, 2] * (epsilon_b[:, 2]
                               - (W[:, :, 3]' * delta_a[:, 2] +
                                  W[:, :, 4]' * delta_a[:, 3])))
+
+# size(J) == (2 * n_points * n_viewpoints,
+#             n_viewpoints * n_pose_params + n_points * n_point_params)
+
+size_A = 12
+size_B = 6
+
+J = zeros(Float64, 2 * 2 * 3, size_A + size_B)
+J[ 1: 2,  1: 4] = A[:, :, 1]
+J[ 3: 4,  5: 8] = A[:, :, 2]
+J[ 9:10,  5: 8] = A[:, :, 3]
+J[11:12,  9:12] = A[:, :, 4]
+J[ 1: 2, 13:15] = B[:, :, 1]
+J[ 3: 4, 13:15] = B[:, :, 2]
+J[ 9:10, 16:18] = B[:, :, 3]
+J[11:12, 16:18] = B[:, :, 4]
+
+# X    = [x_11 x_12 x_22 x_23]
+# mask = [   1    1    0;
+#            0    1    1]
+x_true = Float64[ 1 -1 -1  3;
+                  0  2  1 -8]
+
+x_pred = Float64[ 0  1 -2 -1;
+                 -1  2  9  7]
+
+epsilon = zeros(Float64, 2, 6)
+epsilon[:, 1] = (x_true - x_pred)[:, 1]  # x_11
+epsilon[:, 2] = (x_true - x_pred)[:, 2]  # x_12
+epsilon[:, 5] = (x_true - x_pred)[:, 3]  # x_22
+epsilon[:, 6] = (x_true - x_pred)[:, 4]  # x_23
+
+# zero elements are suppressed
+# therefore size(epsilon_pred) == (2, 4)
+epsilon_pred = SBA.calc_epsilon(x_true, x_pred)
+
+U = (J' * J)[1:size_A, 1:size_A]
+U_pred = SBA.calc_U(indices, A)
+@test isapprox(U_pred[:, :, 1], U[1:4, 1:4])
+@test isapprox(U_pred[:, :, 2], U[5:8, 5:8])
+
+V_inv = inv((J' * J)[size_A+1:size_A+size_B, size_A+1:size_A+size_B])
+V_inv_pred = SBA.calc_V_inv(indices, B)
+@test isapprox(V_inv_pred[:, :, 1], V_inv[1:3, 1:3])
+@test isapprox(V_inv_pred[:, :, 2], V_inv[4:6, 4:6])
+
+W = (J' * J)[1:size_A, size_A+1:size_A+size_B]
+W_pred = SBA.calc_W(indices, A, B)
+@test isapprox(W_pred[:, :, 1], W[1: 4, 1:3])  # W_11
+@test isapprox(W_pred[:, :, 2], W[5: 8, 1:3])  # W_12
+@test isapprox(W_pred[:, :, 3], W[5: 8, 4:6])  # W_22
+@test isapprox(W_pred[:, :, 4], W[9:12, 4:6])  # W_23
+
+S = U - W * V_inv * W'
+println("det(S) = $(det(S))")
+
+Y_pred = SBA.calc_Y(indices, W_pred, V_inv_pred)
+S_pred = SBA.calc_S(indices, U_pred, Y_pred, W_pred)
+@test isapprox(S, S_pred)
+
+epsilon_a = J[:, 1:size_A]' * vec(epsilon)
+epsilon_b = J[:, size_A+1:size_A+size_B]' * vec(epsilon)
+
+epsilon_a_pred = SBA.calc_epsilon_a(indices, A, epsilon_pred)
+@test isapprox(vec(epsilon_a_pred), epsilon_a)
+
+epsilon_b_pred = SBA.calc_epsilon_b(indices, B, epsilon_pred)
+@test isapprox(vec(epsilon_b_pred), epsilon_b)
+
+e = epsilon_a - W * V_inv * epsilon_b
+e_pred = SBA.calc_e(indices, Y_pred, epsilon_a_pred, epsilon_b_pred)
+@test isapprox(e, vec(e_pred))
