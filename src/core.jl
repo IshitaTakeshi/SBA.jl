@@ -174,7 +174,7 @@ function calc_e(indices::Indices, Y::Array, epsilon_a::Array, epsilon_b::Array)
     Y_epsilon_b = Array{Float64}(undef, n_point_params, N)
 
     for i in 1:n_points(indices)
-        epsilon_bi = epsilon_b[:, i]
+        epsilon_bi = view(epsilon_b, :, i)
 
         for index in viewpoints_by_point(indices, i)
             Y_epsilon_b[:, index] = view(Y, :, :, index) * epsilon_bi
