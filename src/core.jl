@@ -198,26 +198,29 @@ function calc_delta_a(S::Array, e::Array)
 end
 
 
-function calc_Widelta_a(Wi::SubArray, delta_a::Array)
-    sum(view(Wi, :, :, j)' * view(delta_a, :, j) for j in 1:size(Wi, 3))
-end
-
-
 function calc_delta_b(indices::Indices, V_inv::Array, W::Array,
                       epsilon_b::Array, delta_a::Array)
-    n = n_points(indices)
+    N = size(W, 3)
     n_point_params = size(epsilon_b, 1)
 
-    delta_b = Array{Float64}(undef, n_point_params, n)
-    for i in 1:n
-        Vi_inv = view(V_inv, :, :, i)
+    W_delta_a = Array{Float64}(undef, n_point_params, N)
 
-        Wi = view(W, :, :, viewpoints_by_point(indices, i))
-        epsilon_bi = view(epsilon_b, :, i)
-        Widelta_a = calc_Widelta_a(Wi, delta_a)
-        delta_b[:, i] = Vi_inv * (epsilon_bi - Widelta_a)
+    # precalculate W_ij * delta_a_j
+    for j in 1:n_viewpoints(indices)
+        delta_aj = view(delta_a, :, j)
+        # Wi = [W_ij for j in J]
+        for index in points_by_viewpoint(indices, j)
+            W_delta_a[:, index] = view(W, :, :, index)' * delta_aj
+        end
     end
 
+    n = n_points(indices)
+    delta_b = Array{Float64}(undef, n_point_params, n)
+    for i in 1:n
+        # sum 'W_ij * delta_a_j' over 'j'
+        sub = view(W_delta_a, :, viewpoints_by_point(indices, i))
+        delta_b[:, i] = V_inv[:, :, i] * (epsilon_b[:, i] - sum(sub, dims = 2))
+    end
     delta_b
 end
 
