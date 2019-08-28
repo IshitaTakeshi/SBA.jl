@@ -226,7 +226,9 @@ end
 
 
 function sba(indices::Indices, x_true::Array, x_pred::Array, A::Array, B::Array)
-    @assert size(A, 3) == size(B, 3)
+    @assert size(A, 3) == size(B, 3) == size(x_true, 2) == size(x_pred, 2)
+    @assert size(A, 1) == 2
+    @assert size(B, 1) == 2
 
     U = calc_U(indices, A)
     V_inv = calc_V_inv(indices, B)
