@@ -225,10 +225,28 @@ function calc_delta_b(indices::Indices, V_inv::Array, W::Array,
 end
 
 
-function sba(indices::Indices, x_true::Array, x_pred::Array, A::Array, B::Array)
+function check_params(indices::Indices, x_true::Array, x_pred::Array,
+                      A::Array, B::Array)
     @assert size(A, 3) == size(B, 3) == size(x_true, 2) == size(x_pred, 2)
-    @assert size(A, 1) == 2
-    @assert size(B, 1) == 2
+    @assert size(A, 1) == size(B, 1) == 2
+
+    n_visible_keypoints = size(x_true, 2)
+    n_pose_params = size(A, 2)
+    n_point_params = size(B, 2)
+
+    n_rows = 2 * n_visible_keypoints
+    n_cols_a = n_pose_params * n_viewpoints(indices)
+    n_cols_b = n_point_params * n_points(indices)
+
+    # J' * J cannot be invertible if n_rows(J) < n_cols(J)
+    if n_rows < n_cols_a + n_cols_b
+        throw(ArgumentError("n_rows(J) must be greater than n_cols(J)"))
+    end
+end
+
+
+function sba(indices::Indices, x_true::Array, x_pred::Array, A::Array, B::Array)
+    check_params(indices, x_true, x_pred, A, B)
 
     U = calc_U(indices, A)
     V_inv = calc_V_inv(indices, B)
