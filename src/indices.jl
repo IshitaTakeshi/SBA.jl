@@ -37,9 +37,6 @@ n_points(indices::Indices) = length(indices.viewpoints_by_point)
 n_viewpoints(indices::Indices) = length(indices.points_by_viewpoint)
 
 
-is_non_zero(A::BitArray, dim::Int) = all(any(A; dims = dim))
-
-
 function Indices(viewpoint_indices::Array{Int}, point_indices::Array{Int})
     @assert length(viewpoint_indices) == length(point_indices)
 
