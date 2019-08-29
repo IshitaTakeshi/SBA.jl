@@ -76,5 +76,5 @@ n_pose_params = size(A, 2)
 n_viewpoints = size(mask, 2)
 size_A = n_pose_params * n_viewpoints
 
-@assert isapprox(delta[1:size_A], vec(delta_a))
-@assert isapprox(delta[size_A+1:end], vec(delta_b))
+@test isapprox(delta[1:size_A], vec(delta_a))
+@test isapprox(delta[size_A+1:end], vec(delta_b))
