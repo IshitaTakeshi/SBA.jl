@@ -1,3 +1,6 @@
+using Base.Iterators: product
+
+
 function create_jacobian(mask::BitArray, A::Array, B::Array)
     @assert size(A, 3) == size(B, 3)
 
@@ -16,33 +19,28 @@ function create_jacobian(mask::BitArray, A::Array, B::Array)
     # n_rows(J) >= n_cols(J)
     @assert n_rows >= n_cols_a + n_cols_b
 
-    n_points, n_viewpoints = size(mask, 1), size(mask, 2)
-
     viewpoint_indices = Array{Int}(undef, N)
     point_indices = Array{Int}(undef, N)
 
     index = 1
-    for i in 1:n_points
-        for j in 1:n_viewpoints
-            if !mask[i, j]
-                continue
-            end
-
-            viewpoint_indices[index] = j
-            point_indices[index] = i
-
-            row = (index - 1) * 2 + 1
-
-            col = (j-1) * n_pose_params + 1
-            JA[row:row+1, col:col+n_pose_params-1] = A[:, :, index]
-
-            col = (i-1) * n_point_params + 1
-            JB[row:row+1, col:col+n_point_params-1] = B[:, :, index]
-
-            index += 1
+    for (i, j) in product(1:n_points, 1:n_viewpoints)
+        if !mask[i, j]
+            continue
         end
-    end
 
+        viewpoint_indices[index] = j
+        point_indices[index] = i
+
+        row = (index - 1) * 2 + 1
+
+        col = (j-1) * n_pose_params + 1
+        JA[row:row+1, col:col+n_pose_params-1] = A[:, :, index]
+
+        col = (i-1) * n_point_params + 1
+        JB[row:row+1, col:col+n_point_params-1] = B[:, :, index]
+
+        index += 1
+    end
     indices = SBA.Indices(viewpoint_indices, point_indices)
     J = hcat(JA, JB)
     indices, J
@@ -67,6 +65,7 @@ x_true = rand(-9:9, 2, N)
 x_pred = rand(-9:9, 2, N)
 A = randn(Float64, 2, 4, N)
 B = randn(Float64, 2, 3, N)
+
 indices, J = create_jacobian(mask, A, B)
 delta_a, delta_b = SBA.sba(indices, x_true, x_pred, A, B)
 
