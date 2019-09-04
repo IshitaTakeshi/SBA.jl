@@ -8,7 +8,7 @@ julia:
 - nightly
 
 script:
-- julia --color=yes -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/IshitaTakeshi/SBA.jl.git")); Pkg.build("SBA"); Pkg.test("SBA"; coverage=true)';
+- julia --color=yes -e 'using Pkg; Pkg.build("SBA"); Pkg.test("SBA"; coverage=true)';
 
 after_success:
 - julia --color=yes -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Coveralls.process_folder())'
