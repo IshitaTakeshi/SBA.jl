@@ -1,0 +1,14 @@
+sudo: false  # disable sudo for speed up
+
+dist: xenial
+language: julia
+
+julia:
+- 1.2
+- nightly
+
+script:
+- julia --color=yes -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("SBA"); Pkg.test("SBA"; coverage=true)';
+
+after_success:
+- julia --color=yes -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Coveralls.process_folder())'
